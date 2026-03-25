@@ -85,11 +85,13 @@ class TaskNotifier extends Notifier<TaskState> {
   Future<Task> createTask({
     required String title,
     DateTime? dueDate,
+    String? voiceTranscript,
   }) async {
     final task = Task.create(
       id: _uuid.v4(),
       title: title,
       dueDate: dueDate,
+      voiceTranscript: voiceTranscript,
     );
 
     // Optimistic local update

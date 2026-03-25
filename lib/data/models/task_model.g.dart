@@ -23,13 +23,14 @@ class TaskAdapter extends TypeAdapter<Task> {
       status: fields[3] as String,
       createdAt: fields[4] as DateTime,
       isSynced: fields[5] as bool,
+      voiceTranscript: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Task obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class TaskAdapter extends TypeAdapter<Task> {
       ..writeByte(4)
       ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.isSynced);
+      ..write(obj.isSynced)
+      ..writeByte(6)
+      ..write(obj.voiceTranscript);
   }
 
   @override

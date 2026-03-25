@@ -47,9 +47,11 @@ class GuidedVoiceNotifier extends Notifier<GuidedVoiceState> {
     );
 
     // 5. Save locally using Hive & Sync to Firestore
+    final transcript = '[Title spoken: "$title"] [Date spoken: "${dateStr.isEmpty ? 'None' : dateStr}"]';
     await ref.read(taskProvider.notifier).createTask(
       title: title,
       dueDate: dueDate,
+      voiceTranscript: transcript,
     );
 
     // 6. Confirm

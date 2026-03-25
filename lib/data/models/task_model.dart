@@ -23,6 +23,9 @@ class Task extends HiveObject {
   @HiveField(5)
   bool isSynced;
 
+  @HiveField(6)
+  String? voiceTranscript;
+
   Task({
     required this.id,
     required this.title,
@@ -30,12 +33,14 @@ class Task extends HiveObject {
     this.status = 'pending',
     required this.createdAt,
     this.isSynced = false,
+    this.voiceTranscript,
   });
 
   factory Task.create({
     required String id,
     required String title,
     DateTime? dueDate,
+    String? voiceTranscript,
   }) {
     return Task(
       id: id,
@@ -44,6 +49,7 @@ class Task extends HiveObject {
       status: 'pending',
       createdAt: DateTime.now(),
       isSynced: false,
+      voiceTranscript: voiceTranscript,
     );
   }
 
@@ -55,6 +61,7 @@ class Task extends HiveObject {
       'status': status,
       'createdAt': createdAt.toIso8601String(),
       'isSynced': true, // When written online, it's synced
+      'voiceTranscript': voiceTranscript,
     };
   }
 
@@ -66,6 +73,7 @@ class Task extends HiveObject {
       status: map['status'] as String? ?? 'pending',
       createdAt: DateTime.parse(map['createdAt'] as String),
       isSynced: true, // If it comes from Firestore, it's synced
+      voiceTranscript: map['voiceTranscript'] as String?,
     );
   }
 
@@ -74,6 +82,7 @@ class Task extends HiveObject {
     DateTime? dueDate,
     String? status,
     bool? isSynced,
+    String? voiceTranscript,
     bool clearDueDate = false,
   }) {
     return Task(
@@ -83,6 +92,7 @@ class Task extends HiveObject {
       status: status ?? this.status,
       createdAt: createdAt,
       isSynced: isSynced ?? this.isSynced,
+      voiceTranscript: voiceTranscript ?? this.voiceTranscript,
     );
   }
 }
