@@ -1,10 +1,4 @@
-// ---------------------------------------------------------------------------
-// Hive-generated TypeAdapters for OfflineCommand and CommandType.
-// Run `flutter pub run build_runner build` to regenerate this file.
-// ---------------------------------------------------------------------------
-
-// ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'offline_command.dart';
 
@@ -26,7 +20,7 @@ class OfflineCommandAdapter extends TypeAdapter<OfflineCommand> {
       id: fields[0] as String,
       type: fields[1] as CommandType,
       taskId: fields[2] as String,
-      payload: fields[3] as Map,
+      payload: (fields[3] as Map).cast<dynamic, dynamic>(),
       timestamp: fields[4] as DateTime,
     );
   }

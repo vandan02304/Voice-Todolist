@@ -32,7 +32,7 @@ class _TaskTileState extends State<TaskTile>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
-      value: widget.task.isCompleted ? 1.0 : 0.0,
+      value: widget.task.status == 'completed' ? 1.0 : 0.0,
     );
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
@@ -45,8 +45,8 @@ class _TaskTileState extends State<TaskTile>
   @override
   void didUpdateWidget(TaskTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.task.isCompleted != oldWidget.task.isCompleted) {
-      if (widget.task.isCompleted) {
+    if ((widget.task.status == 'completed') != (oldWidget.task.status == 'completed')) {
+      if (widget.task.status == 'completed') {
         _controller.forward();
       } else {
         _controller.reverse();
@@ -61,21 +61,14 @@ class _TaskTileState extends State<TaskTile>
   }
 
   Color _priorityColor() {
-    switch (widget.task.priority) {
-      case TaskPriority.high:
-        return AppTheme.priorityHigh;
-      case TaskPriority.low:
-        return AppTheme.priorityLow;
-      case TaskPriority.medium:
-        return AppTheme.priorityMedium;
-    }
+    return AppTheme.priorityMedium;
   }
 
   @override
   Widget build(BuildContext context) {
     final isOverdue = widget.task.dueDate != null &&
         widget.task.dueDate!.isBefore(DateTime.now()) &&
-        !widget.task.isCompleted;
+        widget.task.status != 'completed';
 
     return ScaleTransition(
       scale: _scaleAnim,
@@ -123,7 +116,7 @@ class _TaskTileState extends State<TaskTile>
                 Transform.scale(
                   scale: 1.15,
                   child: Checkbox(
-                    value: widget.task.isCompleted,
+                    value: widget.task.status == 'completed',
                     onChanged: (_) => widget.onToggle(),
                   ),
                 ),
@@ -161,7 +154,7 @@ class _TaskTileState extends State<TaskTile>
                         child: Text(
                           widget.task.title,
                           style: AppTheme.body.copyWith(
-                            color: widget.task.isCompleted
+                            color: widget.task.status == 'completed'
                                 ? const Color(0xFF9090B0)
                                 : const Color(0xFFE0E0F0),
                           ),

@@ -15,9 +15,7 @@ Future<void> main() async {
   await Hive.initFlutter();
 
   // Register all Hive type adapters
-  Hive.registerAdapter(TaskPriorityAdapter());
   Hive.registerAdapter(TaskAdapter());
-  Hive.registerAdapter(CommandTypeAdapter());
   Hive.registerAdapter(OfflineCommandAdapter());
 
   // ── 2. Initialize Firebase ─────────────────────────────────────────────

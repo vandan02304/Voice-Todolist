@@ -57,7 +57,7 @@ class HiveTaskRepository {
   Future<Task?> markComplete(String id) async {
     final task = getById(id);
     if (task == null) return null;
-    final updated = task.copyWith(isCompleted: true, updatedAt: DateTime.now());
+    final updated = task.copyWith(status: 'completed', isSynced: false);
     await save(updated);
     return updated;
   }
@@ -66,7 +66,7 @@ class HiveTaskRepository {
   Future<Task?> markIncomplete(String id) async {
     final task = getById(id);
     if (task == null) return null;
-    final updated = task.copyWith(isCompleted: false, updatedAt: DateTime.now());
+    final updated = task.copyWith(status: 'pending', isSynced: false);
     await save(updated);
     return updated;
   }
@@ -75,7 +75,7 @@ class HiveTaskRepository {
   List<Task> getOverdue() {
     final now = DateTime.now();
     return box.values
-        .where((t) => !t.isCompleted && t.dueDate != null && t.dueDate!.isBefore(now))
+        .where((t) => t.status != 'completed' && t.dueDate != null && t.dueDate!.isBefore(now))
         .toList();
   }
 

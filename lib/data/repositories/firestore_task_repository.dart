@@ -59,8 +59,8 @@ class FirestoreTaskRepository {
   Future<void> markComplete(String taskId) async {
     final ref = await _tasksRef;
     await ref.doc(taskId).update({
-      'isCompleted': true,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'status': 'completed',
+      'isSynced': true,
     });
   }
 
@@ -68,8 +68,8 @@ class FirestoreTaskRepository {
   Future<void> markIncomplete(String taskId) async {
     final ref = await _tasksRef;
     await ref.doc(taskId).update({
-      'isCompleted': false,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'status': 'pending',
+      'isSynced': true,
     });
   }
 }

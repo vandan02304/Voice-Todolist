@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -103,6 +104,39 @@ class SpeechNotifier extends Notifier<SpeechNotifierState> {
         partialResults: true,
       ),
     );
+  }
+
+  /// Listens to a single utterance and returns a Future with the recognized text.
+  Future<String> listenOnce({Duration timeout = const Duration(seconds: 10)}) async {
+    if (state.state == SpeechState.uninitialized) await initialize();
+    
+    final completer = Completer<String>();
+    String lastRecognized = '';
+
+    await startListening(onResult: (text) {
+      lastRecognized = text;
+      if (state.state == SpeechState.processing && !completer.isCompleted) {
+        completer.complete(text);
+      }
+    });
+
+    // Polling loop to detect when speech recognition stops naturally
+    int elapsed = 0;
+    while (!completer.isCompleted && elapsed < timeout.inMilliseconds) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      elapsed += 100;
+      if (!isListening && state.state != SpeechState.listening && state.state != SpeechState.processing) {
+        if (!completer.isCompleted) completer.complete(lastRecognized);
+        break;
+      }
+    }
+
+    if (!completer.isCompleted) {
+      await stopListening();
+      completer.complete(lastRecognized);
+    }
+
+    return completer.future;
   }
 
   /// Stops listening and transitions to processing state.

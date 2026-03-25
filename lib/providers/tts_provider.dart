@@ -15,6 +15,7 @@ class TtsNotifier extends Notifier<bool> {
     await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
+    await _tts.awaitSpeakCompletion(true);
     _tts.setCompletionHandler(() => state = false);
     _tts.setStartHandler(() => state = true);
     _initialized = true;

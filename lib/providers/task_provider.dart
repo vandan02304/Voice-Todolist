@@ -31,8 +31,8 @@ class TaskState {
         error: error,
       );
 
-  List<Task> get incomplete => tasks.where((t) => !t.isCompleted).toList();
-  List<Task> get completed  => tasks.where((t) =>  t.isCompleted).toList();
+  List<Task> get incomplete => tasks.where((t) => t.status != 'completed').toList();
+  List<Task> get completed  => tasks.where((t) => t.status == 'completed').toList();
 }
 
 /// Central task notifier: CRUD, Hive local storage, Firestore sync, offline queue.
@@ -66,7 +66,7 @@ class TaskNotifier extends Notifier<TaskState> {
       };
       for (final remoteTask in remote) {
         final local = mergedMap[remoteTask.id];
-        if (local == null || remoteTask.updatedAt.isAfter(local.updatedAt)) {
+        if (local == null || local.isSynced) {
           mergedMap[remoteTask.id] = remoteTask;
         }
       }
@@ -85,15 +85,11 @@ class TaskNotifier extends Notifier<TaskState> {
   Future<Task> createTask({
     required String title,
     DateTime? dueDate,
-    TaskPriority priority = TaskPriority.medium,
-    String? note,
   }) async {
     final task = Task.create(
       id: _uuid.v4(),
       title: title,
       dueDate: dueDate,
-      priority: priority,
-      note: note,
     );
 
     // Optimistic local update
@@ -114,7 +110,7 @@ class TaskNotifier extends Notifier<TaskState> {
     final task = _findTask(idOrTitle);
     if (task == null) return;
 
-    final updated = task.copyWith(isCompleted: true);
+    final updated = task.copyWith(status: 'completed', isSynced: false);
     await _applyUpdate(updated);
     await _syncWrite(
       () => _firestore.markComplete(task.id),
@@ -127,7 +123,7 @@ class TaskNotifier extends Notifier<TaskState> {
     final task = _findTask(idOrTitle);
     if (task == null) return;
 
-    final updated = task.copyWith(isCompleted: false);
+    final updated = task.copyWith(status: 'pending', isSynced: false);
     await _applyUpdate(updated);
     await _syncWrite(
       () => _firestore.markIncomplete(task.id),
@@ -154,7 +150,7 @@ class TaskNotifier extends Notifier<TaskState> {
   Future<void> toggleTask(String taskId) async {
     final task = _findTask(taskId);
     if (task == null) return;
-    if (task.isCompleted) {
+    if (task.status == 'completed') {
       await uncompleteTask(taskId);
     } else {
       await completeTask(taskId);
@@ -166,7 +162,6 @@ class TaskNotifier extends Notifier<TaskState> {
     String idOrTitle, {
     String? newTitle,
     DateTime? newDueDate,
-    TaskPriority? newPriority,
   }) async {
     final task = _findTask(idOrTitle);
     if (task == null) return;
@@ -174,7 +169,7 @@ class TaskNotifier extends Notifier<TaskState> {
     final updated = task.copyWith(
       title: newTitle,
       dueDate: newDueDate,
-      priority: newPriority,
+      isSynced: false,
     );
     await _applyUpdate(updated);
     await _syncWrite(

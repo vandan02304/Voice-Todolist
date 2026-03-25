@@ -4,12 +4,12 @@ import '../../data/models/task_model.dart';
 import '../../providers/speech_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../../providers/task_provider.dart';
-import '../../services/voice_command_service.dart';
+import '../../services/guided_voice_service.dart';
+import '../../services/guided_voice_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mic_button.dart';
 import '../widgets/sync_status_chip.dart';
 import '../widgets/task_tile.dart';
-import '../widgets/voice_result_sheet.dart';
 
 /// Main home screen.
 class HomeScreen extends ConsumerStatefulWidget {
@@ -45,28 +45,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // ── Voice ─────────────────────────────────────────────────────────────
 
   Future<void> _onMicTap() async {
-    final speech = ref.read(speechProvider.notifier);
-    final isListening = ref.read(speechProvider).state == SpeechState.listening;
+    final guidedVoice = ref.read(guidedVoiceProvider.notifier);
+    final isFlowActive = ref.read(guidedVoiceProvider).step != GuidedVoiceStep.idle;
 
-    if (isListening) {
-      await speech.stopListening();
-      return;
+    if (isFlowActive) {
+      guidedVoice.cancelFlow();
+    } else {
+      guidedVoice.startFlow();
     }
-
-    await speech.startListening(
-      onResult: (text) async {
-        final service = ref.read(voiceCommandServiceProvider);
-        final result  = await service.execute(text);
-        if (mounted) {
-          await showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => VoiceResultSheet(result: result),
-          );
-        }
-      },
-    );
   }
 
   // ── Add task manually ─────────────────────────────────────────────────
@@ -160,7 +146,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final taskState  = ref.watch(taskProvider);
     final syncState  = ref.watch(syncProvider);
     final speechSt   = ref.watch(speechProvider);
-    final isListening = speechSt.state == SpeechState.listening;
+    final guidedSt   = ref.watch(guidedVoiceProvider);
+    
+    final isFlowActive = guidedSt.step != GuidedVoiceStep.idle;
+    final isListening = speechSt.state == SpeechState.listening || guidedSt.step == GuidedVoiceStep.askingTitle || guidedSt.step == GuidedVoiceStep.askingDate;
 
     final incomplete = _filter(taskState.incomplete);
     final completed  = _filter(taskState.completed);
@@ -199,37 +188,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ),
 
-              // ── Listening banner ────────────────────────────────────
+              // ── Guided Voice Banner ────────────────────────────────────
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                height: isListening ? 52 : 0,
-                child: isListening
+                height: isFlowActive ? 60 : 0,
+                child: isFlowActive
                     ? Container(
                         margin: const EdgeInsets.fromLTRB(
                             AppTheme.spacingMd, AppTheme.spacingMd, AppTheme.spacingMd, 0),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.spacingMd),
+                            horizontal: AppTheme.spacingMd, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE53935).withOpacity(0.12),
+                          color: const Color(0xFF6C63FF).withOpacity(0.12),
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusChip),
                           border: Border.all(
-                              color: const Color(0xFFE53935).withOpacity(0.3)),
+                              color: const Color(0xFF6C63FF).withOpacity(0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.graphic_eq_rounded,
-                                color: Color(0xFFE53935), size: 18),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.record_voice_over_rounded,
+                                color: Color(0xFF6C63FF), size: 20),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                speechSt.recognizedText.isEmpty
-                                    ? 'Listening…'
-                                    : speechSt.recognizedText,
-                                style: AppTheme.bodySmall.copyWith(
-                                    color: const Color(0xFFE53935)),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    guidedSt.prompt,
+                                    style: AppTheme.bodySmall.copyWith(
+                                        color: const Color(0xFF6C63FF),
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  if (speechSt.recognizedText.isNotEmpty && 
+                                      (guidedSt.step == GuidedVoiceStep.listeningTitle || 
+                                       guidedSt.step == GuidedVoiceStep.listeningDate))
+                                    Text(
+                                      speechSt.recognizedText,
+                                      style: AppTheme.label.copyWith(
+                                          color: const Color(0xFF9090B0)),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
                               ),
                             ),
                           ],
